@@ -28,7 +28,8 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
           email,
           password,
           options: {
-            data: { full_name: fullName }
+            data: { full_name: fullName },
+            emailRedirectTo: window.location.origin
           }
         });
         if (signUpError) throw signUpError;
