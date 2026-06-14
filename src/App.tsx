@@ -367,9 +367,9 @@ export default function App() {
   };
 
   // Play Web Audio PCM buffer with custom offsets/durations
-  const playPcmBuffer = (audioBuffer: AudioBuffer, offsetSecs: number, rate: number) => {
+  const playPcmBuffer = async (audioBuffer: AudioBuffer, offsetSecs: number, rate: number) => {
     if (progressTimerRef.current) clearInterval(progressTimerRef.current);
-    
+
     try {
       if (sourceNodeRef.current) {
         sourceNodeRef.current.stop();
@@ -377,12 +377,18 @@ export default function App() {
     } catch(e) {}
 
     const ctx = getAudioContext();
+
+    // iOS Safari: must await resume() before source.start() or audio is silent
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
+    }
+
     const source = ctx.createBufferSource();
     source.buffer = audioBuffer;
     source.playbackRate.value = rate;
-    
+
     source.connect(ctx.destination);
-    
+
     // Assign references
     sourceNodeRef.current = source;
     startTimeRef.current = ctx.currentTime - (offsetSecs / rate);
