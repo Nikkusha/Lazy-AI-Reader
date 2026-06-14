@@ -175,7 +175,13 @@ export default function App() {
   // Check and run synthesis loop
   const handleSynthesize = async (text: string, voiceId: string, speedRate: number) => {
     stopCurrentPlayback();
-    
+
+    // iOS Safari requires AudioContext to be created/resumed synchronously
+    // within a user gesture handler — before any await/async break.
+    if (voiceId !== 'local') {
+      try { getAudioContext(); } catch(e) {}
+    }
+
     setActiveText(text);
     setActiveVoiceId(voiceId);
     setActiveSpeedRate(speedRate);
