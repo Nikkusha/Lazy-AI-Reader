@@ -1,0 +1,6 @@
+{
+  "name": "Georgian TTS Reader",
+  "description": "A highly functional Georgian Text-to-Speech (TTS) Reader app featuring server-side Gemini 3.1 TTS and local Web Speech API synthesis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
