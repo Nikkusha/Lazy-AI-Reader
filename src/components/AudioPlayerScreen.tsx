@@ -81,7 +81,7 @@ export default function AudioPlayerScreen({
     onUpdateAndSynthesize(editableText);
   };
 
-  // Generate 40 fixed bars for waveform representation
+  // Generate fixed bars for waveform representation
   const TOTAL_BARS = 45;
   const bars = Array.from({ length: TOTAL_BARS });
 
@@ -98,6 +98,12 @@ export default function AudioPlayerScreen({
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 flex flex-col font-sans" id="audio-player-page">
+      <style>{`
+        @keyframes waveform-skeleton-shimmer {
+          0% { transform: translateX(-140%); }
+          100% { transform: translateX(340%); }
+        }
+      `}</style>
       {/* Navigation Header */}
       <header className="h-16 flex items-center justify-between px-6 border-b border-slate-800 bg-zinc-950/50 backdrop-blur-md sticky top-0 z-10 shrink-0" id="player-header">
         <button
@@ -134,7 +140,7 @@ export default function AudioPlayerScreen({
               </div>
             </div>
             {isBuffering && (
-              <div className="flex items-center gap-2 bg-zinc-800 border border-zinc-750 px-3 py-1.5 rounded-full text-zinc-300 text-xs font-geo animate-pulse">
+              <div className="flex items-center gap-2 bg-zinc-800 border border-zinc-750 px-3 py-1.5 rounded-full text-zinc-300 text-xs font-geo">
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 ხმის გენერირება...
               </div>
@@ -161,43 +167,58 @@ export default function AudioPlayerScreen({
 
             {/* Render dynamic soundwaves */}
             <div className="flex items-end gap-[3px] h-20 relative z-5" id="soundwave-bars">
-              {bars.map((_, i) => {
-                // Determine whether progress has reached this bar
-                const barRatio = i / TOTAL_BARS;
-                const active = progressPercent / 100 >= barRatio;
-
-                // Wobble formula using sinusoidal inputs when playing
-                let heightScale = 0.2; // default idle height ratio (min 20%)
-                if (isPlaying) {
-                  // Phase shift wave to simulate left-to-right fluid travel
-                  const basePhase = (tick * 10 - i * 18) * (Math.PI / 180);
-                  // Dynamic height coefficient
-                  heightScale = 0.35 + Math.sin(basePhase) * 0.45 + Math.cos(tick*0.06 + i)*0.25;
-                  heightScale = Math.max(0.12, Math.min(1.0, heightScale));
-                } else if (active) {
-                  // Subtle scale for played but idle soundwaves
-                  heightScale = 0.28;
-                }
-
-                // Bar heights vary logically in look to resemble a pre-captured microphone sample
-                const initialFactor = Math.abs(Math.sin((i / TOTAL_BARS) * Math.PI)); // Arc pattern
-                const calculatedHeightPercent = (12 + heightScale * 68) * initialFactor;
-
-                return (
+              {isBuffering ? (
+                <div className="relative flex h-3 items-center gap-[3px] overflow-hidden rounded-full">
+                  {bars.map((_, i) => (
+                    <div
+                      key={`waveform-skeleton-${i}`}
+                      className="h-3 w-[6px] rounded-full bg-zinc-700/90 ring-1 ring-zinc-500/40"
+                    />
+                  ))}
                   <div
-                    key={i}
-                    className={`w-[6px] rounded-full transition-all duration-150 ${
-                      active 
-                        ? (isBuffering ? 'bg-zinc-800' : 'bg-zinc-50 shadow-sm brightness-110') 
-                        : 'bg-zinc-800 hover:bg-zinc-700'
-                    }`}
-                    style={{
-                      height: `${Math.max(4, calculatedHeightPercent)}px`,
-                    }}
-                    title={`ბარი ${i + 1}`}
+                    className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-zinc-200/80 to-transparent blur-[1px]"
+                    style={{ animation: 'waveform-skeleton-shimmer 1.25s linear infinite' }}
                   />
-                );
-              })}
+                </div>
+              ) : (
+                bars.map((_, i) => {
+                  // Determine whether progress has reached this bar
+                  const barRatio = i / TOTAL_BARS;
+                  const active = progressPercent / 100 >= barRatio;
+
+                  // Wobble formula using sinusoidal inputs when playing
+                  let heightScale = 0.2; // default idle height ratio (min 20%)
+                  if (isPlaying) {
+                    // Phase shift wave to simulate left-to-right fluid travel
+                    const basePhase = (tick * 10 - i * 18) * (Math.PI / 180);
+                    // Dynamic height coefficient
+                    heightScale = 0.35 + Math.sin(basePhase) * 0.45 + Math.cos(tick*0.06 + i)*0.25;
+                    heightScale = Math.max(0.12, Math.min(1.0, heightScale));
+                  } else if (active) {
+                    // Subtle scale for played but idle soundwaves
+                    heightScale = 0.28;
+                  }
+
+                  // Bar heights vary logically in look to resemble a pre-captured microphone sample
+                  const initialFactor = Math.abs(Math.sin((i / TOTAL_BARS) * Math.PI)); // Arc pattern
+                  const calculatedHeightPercent = (12 + heightScale * 68) * initialFactor;
+
+                  return (
+                    <div
+                      key={i}
+                      className={`w-[6px] rounded-full transition-all duration-150 ${
+                        active 
+                          ? 'bg-zinc-50 shadow-sm brightness-110' 
+                          : 'bg-zinc-800 hover:bg-zinc-700'
+                      }`}
+                      style={{
+                        height: `${Math.max(4, calculatedHeightPercent)}px`,
+                      }}
+                      title={`ბარი ${i + 1}`}
+                    />
+                  );
+                })
+              )}
             </div>
           </div>
 
